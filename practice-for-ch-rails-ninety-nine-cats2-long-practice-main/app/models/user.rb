@@ -37,16 +37,25 @@ class User < ApplicationRecord
 		password_object.is_password?(password)
 	end
 
-	def reset_session_token
-		self.session_token = SecureRandom::urlsafe_base64
+	def reset_session_token!
+		self.session_token = generate_unique_session_token
 		self.save!
 		self.session_token
 	end
 
 	private
 	
-	def generate_unique_session_token
-		self.session_token ||= SecureRandom::urlsafe_base64
+	def generate_unique_session_token #intention: ensure we check for uniqueness
+		possible_token = SecureRandom::urlsafe_base64
+		
+		until !User.find_by?(session_token: possible_token)
+			possible_token = SecureRandom::urlsafe_base64
+		end
+		possible_token
+	end
+
+	def ensure_session_token
+		self.session_token ||= generate_unique_session_token
 	end
 	
 end
